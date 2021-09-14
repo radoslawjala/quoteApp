@@ -11,7 +11,6 @@ import javax.persistence.Id;
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString
 public class Quote {
 
     @Id

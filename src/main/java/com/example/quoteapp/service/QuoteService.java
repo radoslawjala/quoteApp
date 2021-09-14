@@ -16,7 +16,8 @@ public class QuoteService {
 
     private final QuoteRepository repository;
 
-    public void addQuote(Quote quote) {
+    public void addQuote(QuoteDto quoteDto) {
+        Quote quote = new Quote(quoteDto.getAuthor(), quoteDto.getQuote());
         repository.save(quote);
     }
 
@@ -26,10 +27,6 @@ public class QuoteService {
                 .stream()
                 .map(quote -> new QuoteDto(quote.getAuthor(), quote.getQuote()))
                 .collect(Collectors.toList());
-    }
-
-    public Optional<Quote> getQuote(long id) {
-        return repository.findById(id);
     }
 
     public boolean update(long id, QuoteDto quoteDto) {
@@ -44,7 +41,12 @@ public class QuoteService {
         return false;
     }
 
-    public void delete(long id) {
-        repository.deleteById(id);
+    public boolean delete(long id) {
+        Optional<Quote> quote = repository.findById(id);
+        if(quote.isPresent()) {
+            repository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 }
