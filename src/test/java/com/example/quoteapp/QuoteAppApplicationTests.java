@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.validation.BindingResult;
-
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,7 +23,7 @@ class QuoteAppApplicationTests {
     @Autowired
     private QuoteRepository repository;
     private BindingResult bindingResult;
-    private QuoteDto correctQuote = new QuoteDto("Thomas Jefferson", "When injustice becomes law, resistance becomes duty");
+    private final QuoteDto correctQuote = new QuoteDto("Thomas Jefferson", "When injustice becomes law, resistance becomes duty");
 
     @BeforeEach
     void setUp() {
@@ -66,21 +65,52 @@ class QuoteAppApplicationTests {
         //given
         given(bindingResult.hasErrors()).willReturn(false);
         controller.add(correctQuote, bindingResult);
-        //when
         QuoteDto newQuote = new QuoteDto("John Mayer", "Gravity is working against me");
-        controller.update(1, newQuote, bindingResult);
+        //when
+        long updatedQuoteId = repository.findAll().stream().findFirst().get().getId();
+        controller.update(updatedQuoteId, newQuote, bindingResult);
         //then
         assertThat(controller.getAllQuotes().get(0).getAuthor()).isEqualTo(newQuote.getAuthor());
         assertThat(controller.getAllQuotes().get(0).getQuote()).isEqualTo(newQuote.getQuote());
     }
 
-    //    private void addExampleQuotes() {
-//        Quote quote1 = new Quote("John Mayer", "Gravity is working against me");
-//        Quote quote2 = new Quote("No es lo mismo ser que estar", "Alejandro Sanz");
-//        Quote quote3 = new Quote("Chester Bennington", "When life leaves us blind, love keeps us kind");
-//
-//        repository.save(quote1);
-//        repository.save(quote2);
-//        repository.save(quote3);
-//    }
+    @Test
+    void shouldNotUpdateIncorrectQuote() {
+        //given
+        given(bindingResult.hasErrors()).willReturn(false);
+        controller.add(correctQuote, bindingResult);
+        QuoteDto newQuote = new QuoteDto("J", "");
+        //when
+        long id = repository.findAll().stream().findFirst().get().getId();
+        given(bindingResult.hasErrors()).willReturn(true);
+        controller.update(id, newQuote, bindingResult);
+        //then
+        assertThat(controller.getAllQuotes().get(0).getAuthor()).isNotEqualTo(newQuote.getAuthor());
+        assertThat(controller.getAllQuotes().get(0).getQuote()).isNotEqualTo(newQuote.getQuote());
+
+    }
+
+    @Test
+    void shouldDeleteQuoteCorrectly() {
+        //given
+        given(bindingResult.hasErrors()).willReturn(false);
+        controller.add(correctQuote, bindingResult);
+        //when
+        long id = repository.findAll().stream().findFirst().get().getId();
+        controller.delete(id);
+        //then
+        assertThat(controller.getAllQuotes().size()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldNotDeleteQuoteWithIncorrectID() {
+        //given
+        given(bindingResult.hasErrors()).willReturn(false);
+        controller.add(correctQuote, bindingResult);
+        //when
+        long id = repository.findAll().stream().findFirst().get().getId() + 1;
+        controller.delete(id);
+        //then
+        assertThat(controller.getAllQuotes().size()).isEqualTo(1);
+    }
 }
